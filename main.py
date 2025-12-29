@@ -1,6 +1,7 @@
 import requests, re, json, random
 from faker import Faker
 from bs4 import BeautifulSoup
+from flask import Flask, request
 
 fake = Faker()
 domain = "https://www.epicalarc.com"
@@ -135,7 +136,7 @@ def check_card_endpoint():
     result = start_checker(card_str)
     return result
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         if sys.argv[1] == "serve":
