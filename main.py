@@ -135,7 +135,7 @@ def check_card_endpoint():
     result = start_checker(card_str)
     return result
 
-if __name__ == "__scriptauth__":
+if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
         if sys.argv[1] == "serve":
